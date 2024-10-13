@@ -1,8 +1,5 @@
-# TWANG
-A Arduino-based, 1D, LED loving, dungeon crawler. inspired by Line Wobbler by Robin B
-
-## Video playlist
-A playlist that shows the development of TWANG and the game in both a desktop and house-sized form can be found here: https://www.youtube.com/watch?v=9yf_VINmbTE&list=PL1_Z89_x_Dff-XhOxlx6sQ38wJqe1X2M0
+# DungeonCrawler
+A Arduino-based, 1D, LED loving, dungeon crawler. Forked from CRITTERS/TWANG and inspired by Line Wobbler by Robin B
 
 ## Required libraries:
 * FastLED: https://github.com/FastLED/FastLED/files/4608545/FastLED.zip
