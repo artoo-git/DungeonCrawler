@@ -424,6 +424,7 @@ void die(){
     if(levelNumber > 0) lives --;
     updateLives();
     if(lives == 0){
+        playGameOverJingle();  // Play the game over jingle when all lives are lost
         levelNumber = 0;
         lives = 3;
     }
@@ -668,42 +669,7 @@ void screenSaverTick() {
                 leds[i] = CHSV(25, 255, 100);
             }
         }
-    } else if (mode == 2) {
-        // Enhanced rainbow wave
-        static uint8_t hue = 0;
-        static uint8_t wave = 0;
-
-        // Create a sine wave for pulsing effect
-        uint8_t pulse = sin8(wave);
-        wave += 2; // Speed of pulsing
-
-        for (i = 0; i < NUM_LEDS; i++) {
-            // Calculate base hue
-            uint8_t pixelHue = hue + (i * 256 / NUM_LEDS);
-
-            // Add pulsing brightness
-            uint8_t brightness = map(pulse, 0, 255, 100, 255);
-
-            // Set LED color with pulsing brightness
-            leds[i] = CHSV(pixelHue, 255, brightness);
-
-            // Add sparkle effect
-            if (random8() < 10) { // 10% chance for each LED
-                leds[i] += CRGB(50, 50, 50); // Add white sparkle
-            }
-        }
-
-        // Move the rainbow
-        hue++;
-
-        // Optional: Add a comet effect
-        static int cometPos = 0;
-        for (int j = 0; j < 5; j++) { // Comet tail length
-            int pos = (cometPos - j + NUM_LEDS) % NUM_LEDS;
-            leds[pos] += CRGB(255 / (j + 1), 255 / (j + 1), 255 / (j + 1));
-        }
-        cometPos = (cometPos + 3) % NUM_LEDS; // Move comet
-    }
+    } 
 }
 
 
@@ -786,6 +752,62 @@ void getInput(){
 // ---------------------------------
 // -------------- SFX --------------
 // ---------------------------------
+#define NOTE_A4  440
+#define NOTE_G4  392
+#define NOTE_F4  349
+#define NOTE_E4  330
+#define NOTE_D4  294
+#define NOTE_CS4 277
+
+void playGameOverJingle() {
+    // Base duration for a quarter note (adjust for desired speed)
+    int quarterNote = 200;  // milliseconds
+
+    // A
+    toneAC(NOTE_A4, MAX_VOLUME);
+    delay(quarterNote);
+    noToneAC();
+    delay(quarterNote * 0.1);
+
+    // G
+    toneAC(NOTE_G4, MAX_VOLUME);
+    delay(quarterNote);
+    noToneAC();
+    delay(quarterNote * 0.1);
+
+    // A (held)
+    toneAC(NOTE_A4, MAX_VOLUME);
+    delay(quarterNote * 3);
+    noToneAC();
+    delay(quarterNote * 0.1);
+
+    // G
+    toneAC(NOTE_G4, MAX_VOLUME);
+    delay(quarterNote);
+    noToneAC();
+    delay(quarterNote * 0.1);
+
+    // Quick descending notes: f, e, d
+    int descendingNotes[] = {NOTE_F4, NOTE_E4, NOTE_D4};
+    for (int note : descendingNotes) {
+        toneAC(note, MAX_VOLUME);
+        delay(quarterNote * 0.5);
+        noToneAC();
+        delay(quarterNote * 0.1);
+    }
+
+    // ch (held)
+    toneAC( NOTE_CS4, MAX_VOLUME);
+    delay(quarterNote * 3);
+    noToneAC();
+
+    // d (held)
+    toneAC(NOTE_D4, MAX_VOLUME);
+    delay(quarterNote * 3);
+    noToneAC();
+}
+
+
 void SFXtilt(int amount){ 
     int f = map(abs(amount), 0, 90, 80, 900)+random8(100);
     if(playerPositionModifier < 0) f -= 500;
