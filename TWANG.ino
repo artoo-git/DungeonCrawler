@@ -44,12 +44,12 @@ iSin isin = iSin();
 // JOYSTICK
 #define JOYSTICK_ORIENTATION 1     // 0, 1 or 2 to set the angle of the joystick
 #define JOYSTICK_DIRECTION   1     // 0/1 to flip joystick direction
-#define ATTACK_THRESHOLD     25000 // The threshold that triggers an attack
+#define ATTACK_THRESHOLD     20000 // The threshold that triggers an attack
 int joystickTilt = 0;              // Stores the angle of the joystick
 int joystickWobble = 0;            // Stores the max amount of acceleration (wobble)
 
 // JOYSTICK SMOOTHENING
-const int SAMPLE_SIZE = 8; // Increase the SAMPLE_SIZE for more smoothing (but more lag) (values between 5 and 20)
+const int SAMPLE_SIZE = 5; // Increase the SAMPLE_SIZE for more smoothing (but more lag) (values between 5 and 20)
 int axSamples[SAMPLE_SIZE] = {0};
 int aySamples[SAMPLE_SIZE] = {0};
 int azSamples[SAMPLE_SIZE] = {0};
@@ -59,7 +59,7 @@ int sampleIndex = 0;
 #define JOYSTICK_DEADZONE 11        // Increase this to ignore small movements, decrease to make it more sensitive: Try values between 3 and 15. 
 #define MEDIAN_SAMPLE_SIZE 3       // Adjust the sample size in the RunningMedian constructor for more or less smoothing: Try values betweew 3 and 9
 #define ACCEL_SCALE_FACTOR 100     // adjust the scaling of the accelerometer reading: Try values between 100 and 250
-#define MOVE_SPEED_FACTOR 8.0      // adjust how quickly the player moves based on the joystick tilt: Try values between 5.0 and 15.0
+#define MOVE_SPEED_FACTOR 15.0      // adjust how quickly the player moves based on the joystick tilt: Try values between 5.0 and 15.0
 
 // WOBBLE ATTACK
 #define ATTACK_WIDTH        70     // Width of the wobble attack, world is 1000 wide
@@ -69,8 +69,8 @@ bool attacking = 0;                // Is the attack in progress?
 #define BOSS_WIDTH          40
 
 // PLAYER
-#define MAX_PLAYER_SPEED    13     // Max move speed of the player
-const char* stage;                       // what stage the game is at (PLAY/DEAD/WIN/GAMEOVER)
+#define MAX_PLAYER_SPEED    15     // Max move speed of the player
+const char* stage;                 // what stage the game is at (PLAY/DEAD/WIN/GAMEOVER)
 long stageStartTime;               // Stores the time the stage changed for stages that are time based
 int playerPosition;                // Stores the player position
 int playerPositionModifier;        // +/- adjustment to player position
@@ -586,9 +586,9 @@ void tickConveyors(){
             
             if(playerPosition > conveyorPool[i]._startPoint && playerPosition < conveyorPool[i]._endPoint){
                 if(dir == -1){
-                    playerPositionModifier = -(MAX_PLAYER_SPEED-4);
+                    playerPositionModifier = -(MAX_PLAYER_SPEED/3.5);  // Changed from (MAX_PLAYER_SPEED-4)
                 }else{
-                    playerPositionModifier = (MAX_PLAYER_SPEED-4);
+                    playerPositionModifier = (MAX_PLAYER_SPEED/2);   // Changed from (MAX_PLAYER_SPEED-4)
                 }
             }
         }
