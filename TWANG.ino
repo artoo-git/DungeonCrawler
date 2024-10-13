@@ -19,18 +19,18 @@
 MPU6050 accelgyro;
 int16_t ax, ay, az;
 int16_t gx, gy, gz;
-
+#define CLOCK_PIN            4
 // LED setup
-#define NUM_LEDS             475
+#define NUM_LEDS             300
 #define DATA_PIN             3
 #define CLOCK_PIN            4     
 #define LED_COLOR_ORDER      BGR   //if colours aren't working, try GRB or GBR
-#define BRIGHTNESS           150   //Use a lower value for lower current power supplies(<2 amps)
+#define BRIGHTNESS           200   //Use a lower value for lower current power supplies(<2 amps) MAX = 255
 #define DIRECTION            1     // 0 = right to left, 1 = left to right
 #define MIN_REDRAW_INTERVAL  16    // Min redraw interval (ms) 33 = 30fps / 16 = 63fps
 #define USE_GRAVITY          1     // 0/1 use gravity (LED strip going up wall)
-#define BEND_POINT           550   // 0/1000 point at which the LED strip goes up the wall
-#define LED_TYPE             APA102//type of LED strip to use(APA102 - DotStar, WS2811 - NeoPixel) For Neopixels, uncomment line #108 and comment out line #106
+//#define BEND_POINT           900   // 0/1000 point at which the LED strip goes up the wall - currently not used
+#define LED_TYPE             WS2812B//type of LED strip to use(APA102 - DotStar, WS2811 - NeoPixel) For Neopixels, uncomment line #108 and comment out line #106
 
 // GAME
 long previousMillis = 0;           // Time of the last redraw
@@ -44,10 +44,22 @@ iSin isin = iSin();
 // JOYSTICK
 #define JOYSTICK_ORIENTATION 1     // 0, 1 or 2 to set the angle of the joystick
 #define JOYSTICK_DIRECTION   1     // 0/1 to flip joystick direction
-#define ATTACK_THRESHOLD     30000 // The threshold that triggers an attack
-#define JOYSTICK_DEADZONE    5     // Angle to ignore
+#define ATTACK_THRESHOLD     25000 // The threshold that triggers an attack
 int joystickTilt = 0;              // Stores the angle of the joystick
 int joystickWobble = 0;            // Stores the max amount of acceleration (wobble)
+
+// JOYSTICK SMOOTHENING
+const int SAMPLE_SIZE = 8; // Increase the SAMPLE_SIZE for more smoothing (but more lag) (values between 5 and 20)
+int axSamples[SAMPLE_SIZE] = {0};
+int aySamples[SAMPLE_SIZE] = {0};
+int azSamples[SAMPLE_SIZE] = {0};
+int sampleIndex = 0;
+
+#define LOWPASS_ALPHA 0.3          // Adjust this value between 0 and 1 to change smoothing (lower = more smooth): Try values between 0.05 and 0.5
+#define JOYSTICK_DEADZONE 11        // Increase this to ignore small movements, decrease to make it more sensitive: Try values between 3 and 15. 
+#define MEDIAN_SAMPLE_SIZE 3       // Adjust the sample size in the RunningMedian constructor for more or less smoothing: Try values betweew 3 and 9
+#define ACCEL_SCALE_FACTOR 100     // adjust the scaling of the accelerometer reading: Try values between 100 and 250
+#define MOVE_SPEED_FACTOR 8.0      // adjust how quickly the player moves based on the joystick tilt: Try values between 5.0 and 15.0
 
 // WOBBLE ATTACK
 #define ATTACK_WIDTH        70     // Width of the wobble attack, world is 1000 wide
@@ -57,8 +69,8 @@ bool attacking = 0;                // Is the attack in progress?
 #define BOSS_WIDTH          40
 
 // PLAYER
-#define MAX_PLAYER_SPEED    10     // Max move speed of the player
-char* stage;                       // what stage the game is at (PLAY/DEAD/WIN/GAMEOVER)
+#define MAX_PLAYER_SPEED    13     // Max move speed of the player
+const char* stage;                       // what stage the game is at (PLAY/DEAD/WIN/GAMEOVER)
 long stageStartTime;               // Stores the time the stage changed for stages that are time based
 int playerPosition;                // Stores the player position
 int playerPositionModifier;        // +/- adjustment to player position
@@ -67,7 +79,7 @@ long killTime;
 int lives = 3;
 
 // POOLS
-int lifeLEDs[3] = {52, 50, 40};
+int lifeLEDs[3] = {30, 32, 34};
 Enemy enemyPool[10] = {
     Enemy(), Enemy(), Enemy(), Enemy(), Enemy(), Enemy(), Enemy(), Enemy(), Enemy(), Enemy()
 };
@@ -91,8 +103,8 @@ int const conveyorCount = 2;
 Boss boss = Boss();
 
 CRGB leds[NUM_LEDS];
-RunningMedian MPUAngleSamples = RunningMedian(5);
-RunningMedian MPUWobbleSamples = RunningMedian(5);
+RunningMedian MPUAngleSamples = RunningMedian(MEDIAN_SAMPLE_SIZE);
+RunningMedian MPUWobbleSamples = RunningMedian(MEDIAN_SAMPLE_SIZE);
 
 void setup() {
     Serial.begin(9600);
@@ -103,9 +115,9 @@ void setup() {
     accelgyro.initialize();
     
     // Fast LED
-    FastLED.addLeds<LED_TYPE, DATA_PIN, CLOCK_PIN, LED_COLOR_ORDER>(leds, NUM_LEDS);
-    //If using Neopixels, use
-    //FastLED.addLeds<LED_TYPE, DATA_PIN, LED_COLOR_ORDER>(leds, NUM_LEDS);
+    //FastLED.addLeds<LED_TYPE, DATA_PIN, CLOCK_PIN, LED_COLOR_ORDER>(leds, NUM_LEDS);
+    //If using Neopixels,ot WS2812B use
+    FastLED.addLeds<LED_TYPE, DATA_PIN, LED_COLOR_ORDER>(leds, NUM_LEDS);
     FastLED.setBrightness(BRIGHTNESS);
     FastLED.setDither(1);
     
@@ -164,7 +176,7 @@ void loop() {
             // If still not attacking, move!
             playerPosition += playerPositionModifier;
             if(!attacking){
-                int moveAmount = (joystickTilt/6.0);
+                int moveAmount = (joystickTilt/MOVE_SPEED_FACTOR);
                 if(DIRECTION) moveAmount = -moveAmount;
                 moveAmount = constrain(moveAmount, -MAX_PLAYER_SPEED, MAX_PLAYER_SPEED);
                 playerPosition -= moveAmount;
@@ -351,7 +363,7 @@ void spawnEnemy(int pos, int dir, int sp, int wobble){
     }
 }
 
-void spawnLava(int left, int right, int ontime, int offtime, int offset, char* state){
+void spawnLava(int left, int right, int ontime, int offtime, int offset, const char* state){
     for(int i = 0; i<lavaCount; i++){
         if(!lavaPool[i].Alive()){
             lavaPool[i].Spawn(left, right, ontime, offtime, offset, state);
@@ -629,34 +641,71 @@ void updateLives(){
 // ---------------------------------
 // --------- SCREENSAVER -----------
 // ---------------------------------
-void screenSaverTick(){
+void screenSaverTick() {
     int n, b, c, i;
     long mm = millis();
-    int mode = (mm/20000)%2;
-    
-    for(i = 0; i<NUM_LEDS; i++){
+    int mode = (mm / 20000) % 3;
+
+    for (i = 0; i < NUM_LEDS; i++) {
         leds[i].nscale8(250);
     }
-    if(mode == 0){
-        // Marching green <> orange
-        n = (mm/250)%10;
-        b = 10+((sin(mm/500.00)+1)*20.00);
-        c = 20+((sin(mm/5000.00)+1)*33);
-        for(i = 0; i<NUM_LEDS; i++){
-            if(i%10 == n){
-                leds[i] = CHSV( c, 255, 150);
+
+    if (mode == 0) {
+        // Marching green <> orange (unchanged)
+        n = (mm / 250) % 10;
+        b = 10 + ((sin(mm / 500.00) + 1) * 20.00);
+        c = 20 + ((sin(mm / 5000.00) + 1) * 33);
+        for (i = 0; i < NUM_LEDS; i++) {
+            if (i % 10 == n) {
+                leds[i] = CHSV(c, 255, 150);
             }
         }
-    }else if(mode == 1){
-        // Random flashes
+    } else if (mode == 1) {
+        // Random flashes (unchanged)
         randomSeed(mm);
-        for(i = 0; i<NUM_LEDS; i++){
-            if(random8(200) == 0){
-                leds[i] = CHSV( 25, 255, 100);
+        for (i = 0; i < NUM_LEDS; i++) {
+            if (random8(200) == 0) {
+                leds[i] = CHSV(25, 255, 100);
             }
         }
+    } else if (mode == 2) {
+        // Enhanced rainbow wave
+        static uint8_t hue = 0;
+        static uint8_t wave = 0;
+
+        // Create a sine wave for pulsing effect
+        uint8_t pulse = sin8(wave);
+        wave += 2; // Speed of pulsing
+
+        for (i = 0; i < NUM_LEDS; i++) {
+            // Calculate base hue
+            uint8_t pixelHue = hue + (i * 256 / NUM_LEDS);
+
+            // Add pulsing brightness
+            uint8_t brightness = map(pulse, 0, 255, 100, 255);
+
+            // Set LED color with pulsing brightness
+            leds[i] = CHSV(pixelHue, 255, brightness);
+
+            // Add sparkle effect
+            if (random8() < 10) { // 10% chance for each LED
+                leds[i] += CRGB(50, 50, 50); // Add white sparkle
+            }
+        }
+
+        // Move the rainbow
+        hue++;
+
+        // Optional: Add a comet effect
+        static int cometPos = 0;
+        for (int j = 0; j < 5; j++) { // Comet tail length
+            int pos = (cometPos - j + NUM_LEDS) % NUM_LEDS;
+            leds[pos] += CRGB(255 / (j + 1), 255 / (j + 1), 255 / (j + 1));
+        }
+        cometPos = (cometPos + 3) % NUM_LEDS; // Move comet
     }
 }
+
 
 // ---------------------------------
 // ----------- JOYSTICK ------------
@@ -670,19 +719,66 @@ void getInput(){
         // if(digitalRead(rightButtonPinNumber) == HIGH) joystickTilt = 90;
         // if(digitalRead(attackButtonPinNumber) == HIGH) joystickWobble = ATTACK_THRESHOLD;
     
-    accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-    int a = (JOYSTICK_ORIENTATION == 0?ax:(JOYSTICK_ORIENTATION == 1?ay:az))/166;
-    int g = (JOYSTICK_ORIENTATION == 0?gx:(JOYSTICK_ORIENTATION == 1?gy:gz));
-    if(abs(a) < JOYSTICK_DEADZONE) a = 0;
-    if(a > 0) a -= JOYSTICK_DEADZONE;
-    if(a < 0) a += JOYSTICK_DEADZONE;
-    MPUAngleSamples.add(a);
-    MPUWobbleSamples.add(g);
+    //accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+    //int a = (JOYSTICK_ORIENTATION == 0?ax:(JOYSTICK_ORIENTATION == 1?ay:az))/ACCEL_SCALE_FACTOR;
+    //int g = (JOYSTICK_ORIENTATION == 0?gx:(JOYSTICK_ORIENTATION == 1?gy:gz));
+    //if(abs(a) < JOYSTICK_DEADZONE) a = 0;
+    //if(a > 0) a -= JOYSTICK_DEADZONE;
+    //if(a < 0) a += JOYSTICK_DEADZONE;
+    //MPUAngleSamples.add(a);
+    //MPUWobbleSamples.add(g);
     
-    joystickTilt = MPUAngleSamples.getMedian();
-    if(JOYSTICK_DIRECTION == 1) {
-        joystickTilt = 0-joystickTilt;
+    //joystickTilt = MPUAngleSamples.getMedian();
+    //if(JOYSTICK_DIRECTION == 1) {
+    //    joystickTilt = 0-joystickTilt;
+    //}
+    //joystickWobble = abs(MPUWobbleSamples.getHighest());
+    //
+    //
+    // Add new samples
+    accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+
+    // Add new samples
+    axSamples[sampleIndex] = ax;
+    aySamples[sampleIndex] = ay;
+    azSamples[sampleIndex] = az;
+    sampleIndex = (sampleIndex + 1) % SAMPLE_SIZE;
+
+    // Calculate averages
+    long axSum = 0, aySum = 0, azSum = 0;
+    for (int i = 0; i < SAMPLE_SIZE; i++) {
+        axSum += axSamples[i];
+        aySum += aySamples[i];
+        azSum += azSamples[i];
     }
+    int axAvg = axSum / SAMPLE_SIZE;
+    int ayAvg = aySum / SAMPLE_SIZE;
+    int azAvg = azSum / SAMPLE_SIZE;
+
+    // Use the averaged values
+    int a = (JOYSTICK_ORIENTATION == 0 ? axAvg : (JOYSTICK_ORIENTATION == 1 ? ayAvg : azAvg)) / ACCEL_SCALE_FACTOR;
+    int g = (JOYSTICK_ORIENTATION == 0 ? gx : (JOYSTICK_ORIENTATION == 1 ? gy : gz));
+
+    // Apply deadzone
+    if (abs(a) < JOYSTICK_DEADZONE) a = 0;
+    if (a > 0) a -= JOYSTICK_DEADZONE;
+    if (a < 0) a += JOYSTICK_DEADZONE;
+
+    // Further smoothing using RunningMedian
+    MPUAngleSamples.add(a);
+    MPUWobbleSamples.add(abs(g));
+
+    joystickTilt = MPUAngleSamples.getMedian();
+    if (JOYSTICK_DIRECTION == 1) {
+        joystickTilt = 0 - joystickTilt;
+    }
+
+    // Apply low-pass filter to joystickTilt
+    static float filteredTilt = 0;
+    float alpha = LOWPASS_ALPHA;     // Low-Pass Filter Alpha
+    filteredTilt = alpha * joystickTilt + (1 - alpha) * filteredTilt;
+    joystickTilt = (int)filteredTilt;
+
     joystickWobble = abs(MPUWobbleSamples.getHighest());
 }
 
@@ -723,12 +819,3 @@ void SFXwin(){
 void SFXcomplete(){
     noToneAC();
 }
-
-
-
-
-
-
-
-
-

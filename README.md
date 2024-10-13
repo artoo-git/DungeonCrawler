@@ -46,6 +46,14 @@ Find the loadLevel() function, in there you can see a switch statment with the 1
 
 **playerPosition;** Where the player starts on the 0 to 1000 line. If not set it defaults to 0. I set it to 200 in the first level so the player can see movement even if the first action they take is to push the joystick left
 
+**JOYSTICK SMOOTHENING** This allows to adjust for different accelerometer/spring configurations
+
+#define LOWPASS_ALPHA 0.3          // Adjust this value between 0 and 1 to change smoothing (lower = more smooth): Try values between 0.05 and 0.5
+#define JOYSTICK_DEADZONE 11        // Increase this to ignore small movements, decrease to make it more sensitive: Try values between 3 and 15. 
+#define MEDIAN_SAMPLE_SIZE 3       // Adjust the sample size in the RunningMedian constructor for more or less smoothing: Try values betweew 3 and 9
+#define ACCEL_SCALE_FACTOR 100     // adjust the scaling of the accelerometer reading: Try values between 100 and 250
+#define MOVE_SPEED_FACTOR 8.0      // adjust how quickly the player moves based on the joystick tilt: Try values between 5.0 and 15.0
+
 **spawnEnemy(position, direction, speed, wobble);**
 * position: 0 to 1000
 * direction: 0/1, initial direction of travel
