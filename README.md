@@ -21,7 +21,7 @@ An Arduino-based, 1D, LED-loving dungeon crawler. This project is forked from [C
 - Speaker for sound effects (e.g. 1x 2W 8 Ohm Speaker)
 - 3 LEDs for life indicators
 
-Some 3d print models for the HW enclosure are available (e.g [here](https://www.thingiverse.com/thing:5390686)). I used an old router chassis and I built the joystick as an external controller. If you go that way, use a shielded cable and keep it short to prevent excessive noise acceleromenter.
+Some 3d print models for the HW enclosure are available (e.g [here](https://www.thingiverse.com/thing:5390686)). I used an old router chassis and I built the joystick as an external controller. If you go that way, use a shielded cable and keep it short to prevent excessive noise buildup.
 
 ## Software Dependencies
 - FastLED library
@@ -29,14 +29,13 @@ Some 3d print models for the HW enclosure are available (e.g [here](https://www.
 - MPU6050 library
 - Wire library
 - toneAC library
-- iSin library
 - RunningMedian library
 
 ## Setup
-1. Connect the LED strip to the specified data pin (default: 3)
-2. Connect the MPU6050 to the I2C pins of your Arduino
-3. Connect a speaker to the appropriate pin for toneAC
-4. Connect 3 LEDs to pins 30, 32, and 34 for life indicators
+1. Connect the LED strip to the specified data pin (default: PIN 3, add CLK pin if your strip has clock wire)
+2. Connect the MPU6050 to the I2C pins of your Arduino (3.3v, gnd, SDA and SCL PINs)
+3. Connect a speaker to the appropriate pin for toneAC (PIN 11 and 12)
+4. Connect 3 LEDs to pins 30, 32, and 34 for life indicators (or other pins as you pls)
 5. Upload the code to your Arduino
 
 ## Gameplay
