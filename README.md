@@ -1,83 +1,101 @@
-# DungeonCrawler
-A Arduino-based, 1D, LED loving, dungeon crawler. Forked from CRITTERS/TWANG and inspired by Line Wobbler by Robin B
+# Dungeon Crawler 1D
 
-## Required libraries:
-* FastLED: https://github.com/FastLED/FastLED/files/4608545/FastLED.zip
-* I2Cdev
-* MPU6050: https://github.com/jrowberg/i2cdevlib/tree/master/Arduino/MPU6050
-* RunningMedian: http://playground.arduino.cc/Main/RunningMedian
+## Description
+An Arduino-based, 1D, LED-loving dungeon crawler. This project is forked from [CRITTERS/TWANG](https://github.com/Critters/TWANG) and inspired by Line Wobbler by Robin B. It uses an LED strip to create an immersive dungeon crawler-style experience where players navigate through various levels, avoiding enemies and obstacles.
 
-## Hardware used:
-* Arduino MEGA/NANO
-* 3 LEDs for life indicator
-* APA102-C LED light strip. The more the better, maximum of 1000. Tested with 2x 144/meter and 12x 60/meter strips. The FastLED lib works with the less expensive WS2812 LEDs, i've not tried them but should be fine.
-* 5v power supply, assume around 40mW per LED to calculate size
-* MPU6050 accelerometer
-* Spring doorstop, I used these: http://smile.amazon.com/gp/product/B00J4Y5BU2
+## Features
+- Multiple game levels with increasing difficulty
+- Player movement controlled by an MPU6050 accelerometer
+- Enemy AI with different movement patterns
+- Lava and conveyor belt obstacles
+- Boss battles
+- Lives system with LED indicators
+- Sound effects using toneAC library
+- Particle effects for player death
+- Screensaver mode
 
-## Enclosure
-Files to print your own enclosure can be found here: http://www.thingiverse.com/thing:1116899
+## Hardware Requirements
+- Arduino board (compatible with FastLED and I2Cdev libraries)
+- LED strip (WS2812B or similar, compatible with FastLED)
+- MPU6050 accelerometer
+- Speaker for sound effects
+- 3 LEDs for life indicators
 
-## Overview
-TWANG was developed quickly to make my Halloween lights interactive, the code is fairly well commmented but could be improved. The following is a quick overview of the code to help you understand and tweak the game to your needs.
+## Software Dependencies
+- FastLED library
+- I2Cdev library
+- MPU6050 library
+- Wire library
+- toneAC library
+- iSin library
+- RunningMedian library
 
-The game is played on a 1000 unit line, the position of enemies, the player, lava etc range from 0 to 1000 and the LEDs that represent them are derived using the getLED() function. You don't need to worry about this but it's good to know for things like the width of the attack and player max move speed. Regardles of the number of LEDs, everything takes place in this 1000 unit wide line.
+## Setup
+1. Connect the LED strip to the specified data pin (default: 3)
+2. Connect the MPU6050 to the I2C pins of your Arduino
+3. Connect a speaker to the appropriate pin for toneAC
+4. Connect 3 LEDs to pins 30, 32, and 34 for life indicators
+5. Upload the code to your Arduino
 
-**ATMEGA4809**
-The TWANG4809 sketch is intended for use with the Arduino Nano Every and the Uno Wifi REV2 both of which use the Atmega 4809 processor.
-At the time of writing, these boards do not have out of the box support for FastLED or ToneAC.
-This sketch removes the ToneAC functionality.
-For FastLED to function, install [this](https://github.com/FastLED/FastLED/files/4608545/FastLED.zip) library instead of the one listed in Arduino IDE.
+## Gameplay
+- Tilt the MPU6050 to move the player (green LED) left or right
+- Avoid red enemy LEDs and lava (orange LEDs)
+- Reach the blue exit LED to complete a level
+- Shake the MPU6050 to perform an attack
+- Defeat the boss (dark red LEDs) in the final level
 
-**//LED SETUP** Defines the quantity of LEDs as well as the data and clock pins used. I've tested several APA102-C strips and the color order sometimes changes from BGR to GBR or GRB, if the player is not blue, the exit green and the enemies red, this is the bit you want to change. Brightness should range from 50 to 255, use a lower number if playing at night or wanting to use a smaller power supply. "DIRECTION" can be set to 0 or 1 to flip the game orientation. In setup() there is a "FastLED.addLeds()" line, in there you could change it to another brand of LED strip like the cheaper WS2812.
+## Customization
 
-The game also has 3 regular LEDs for life indicators (the player gets 3 lives which reset each time they level up). The pins for these LEDs are stored in lifeLEDs[] and are updated in the updateLives() function
+### Joystick Smoothening
+Adjust these values in the code to fine-tune the controls:
 
-**//JOYSTICK SETUP** All parameters are commented in the code, you can set it to work in both forward/backward as well as side-to-side mode by changing JOYSTICK_ORIENTATION. Adjust the ATTACK_THRESHOLD if the "Twanging" is overly sensitive and the JOYSTICK_DEADZONE if the player slowly drifts when there is no input (because it's hard to get the MPU6050 dead level).
+#define LOWPASS_ALPHA 0.3        // Adjust between 0.05 and 0.5 (lower = more smooth)
+#define JOYSTICK_DEADZONE 11     // Try values between 3 and 15
+#define MEDIAN_SAMPLE_SIZE 3     // Try values between 3 and 9
+#define ACCEL_SCALE_FACTOR 100   // Try values between 100 and 250
+#define MOVE_SPEED_FACTOR 8.0    // Try values between 5.0 and 15.0
 
-**//WOBBLE ATTACK** Sets the width, duration (ms) of the attack.
+### Modifying / Creating Levels
+Find the loadLevel() function in the code. It contains a switch statement with 10 predefined levels. You can modify existing levels or add new ones using the following functions:
 
-**//POOLS** These are the object pools for enemies, particles, lava, conveyors etc. You can modify the quantity of any of them if your levels use more or if you want to save some memory, just remember to update the respective counts to avoid errors.
+1. Set player start position:
+   playerPosition; Where the player starts on the 0 to 1000 line. If not set it defaults to 0.
 
-**//USE_GRAVITY** 0/1 to set if particles created by the player getting killed should fall towards the start point, the BEND_POINT variable can be set to mark the point at which the strip of LEDs goes from been horizontal to vertical. The game is 1000 units wide (regardless of number of LED's) so 500 would be the mid point. If this is confusing just set USE_GRAVITY to 0.
+2. Spawn an enemy:
+   spawnEnemy(position, direction, speed, wobble);
+   - position: 0 to 1000
+   - direction: 0/1, initial direction of travel
+   - speed: >=0, speed of the enemy (recommended between 1 and 4)
+   - wobble: 0=regular moving enemy, 1=sine wave enemy (speed sets wave width)
 
-## Modifying / Creating levels
-Find the loadLevel() function, in there you can see a switch statment with the 10 levels I created. They all call different functions and variables to setup the level. Each one is described below:
+3. Create a spawn pool (continuously spawning enemies):
+   spawnPool[poolNumber].Spawn(position, rate, speed, direction);
+   - position: 0 to 1000
+   - rate: milliseconds between spawns
+   - speed: speed of spawned enemies
+   - direction: 0=towards start, 1=away from start
 
-**playerPosition;** Where the player starts on the 0 to 1000 line. If not set it defaults to 0. I set it to 200 in the first level so the player can see movement even if the first action they take is to push the joystick left
+4. Add lava:
+   spawnLava(startPoint, endPoint, ontime, offtime, offset);
+   - startPoint, endPoint: 0 to 1000
+   - ontime: How long (ms) the lava is ON for
+   - offtime: How long (ms) the lava is OFF for
+   - offset: Delay (ms) before lava activates
 
-**JOYSTICK SMOOTHENING** This allows to adjust for different accelerometer/spring configurations
+5. Add a conveyor belt:
+   spawnConveyor(startPoint, endPoint, direction);
+   - startPoint, endPoint: 0 to 1000
+   - direction: the direction of travel 0/1
 
-#define LOWPASS_ALPHA 0.3          // Adjust this value between 0 and 1 to change smoothing (lower = more smooth): Try values between 0.05 and 0.5
-#define JOYSTICK_DEADZONE 11        // Increase this to ignore small movements, decrease to make it more sensitive: Try values between 3 and 15. 
-#define MEDIAN_SAMPLE_SIZE 3       // Adjust the sample size in the RunningMedian constructor for more or less smoothing: Try values betweew 3 and 9
-#define ACCEL_SCALE_FACTOR 100     // adjust the scaling of the accelerometer reading: Try values between 100 and 250
-#define MOVE_SPEED_FACTOR 8.0      // adjust how quickly the player moves based on the joystick tilt: Try values between 5.0 and 15.0
+6. Spawn a boss:
+   spawnBoss()
+   - No parameters (always spawns in the same place with 3 lives)
+   - Modify Boss.h to change boss behavior
 
-**spawnEnemy(position, direction, speed, wobble);**
-* position: 0 to 1000
-* direction: 0/1, initial direction of travel
-* speed: >=0, speed of the enemy, remember the game is 1000 wide and runs at 60fps. I recommend between 1 and 4
-* wobble: 0=regular moving enemy, 1=sine wave enemy, in this case speed sets the width of the wave
+## License
+This project is released under the MIT License.
 
-**spawnPool[poolNumber].Spawn(position, rate, speed, direction);**
-* A spawn pool is a point which spawns enemies forever
-* position: 0 to 1000
-* rate: milliseconds between spawns, 1000 = 1 second
-* speed: speed of the enemis it spawns
-* direction: 0=towards start, 1=away from start
-
-**spawnLava(startPoint, endPoint, ontime, offtime, offset);**
-* startPoint: 0 to 1000
-* endPoint: 0 to 1000, combined with startPoint this sets the location and size of the lava
-* ontime: How lomg (ms) the lava is ON for
-* offset: How long (ms) after the level starts before the lava turns on, use this to create patterns with multiple lavas
-
-**spawnConveyor(startPoint, endPoint, direction);**
-* startPoint, endPoint: Same as lava
-* direction: the direction of travel 0/1
-
-**spawnBoss()**
-* There are no parramaters for a boss, they always spawn in the same place and have 3 lives. Tweak the values of Boss.h to modify
-
-Feel free to edit, comment on the YouTube video (link at top) if you have any questions.
+## Acknowledgements
+- Original CRITTERS/TWANG project
+- Line Wobbler by Robin B
+- FastLED, I2Cdev, and other open-source libraries used in this project
