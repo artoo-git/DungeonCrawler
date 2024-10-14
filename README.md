@@ -47,13 +47,15 @@ An Arduino-based, 1D, LED-loving dungeon crawler. This project is forked from [C
 ## Customization
 
 ### Joystick Smoothening
-Adjust these values in the code to fine-tune the controls:
+The game includes several parameters to adjust the responsiveness and smoothness of the joystick (accelerometer) control. These can be found in the code and include:
 
-#define LOWPASS_ALPHA 0.3        // Adjust between 0.05 and 0.5 (lower = more smooth)
-#define JOYSTICK_DEADZONE 11     // Try values between 3 and 15
-#define MEDIAN_SAMPLE_SIZE 3     // Try values between 3 and 9
-#define ACCEL_SCALE_FACTOR 100   // Try values between 100 and 250
-#define MOVE_SPEED_FACTOR 8.0    // Try values between 5.0 and 15.0
+- LOWPASS_ALPHA: Adjusts the smoothing effect (lower values = more smooth)
+- JOYSTICK_DEADZONE: Defines the threshold for ignoring small movements
+- MEDIAN_SAMPLE_SIZE: Sets the number of samples used for smoothing
+- ACCEL_SCALE_FACTOR: Scales the accelerometer readings
+- MOVE_SPEED_FACTOR: Adjusts how quickly the player moves based on joystick tilt
+
+You can experiment with these values to find the best balance between responsiveness and smooth control for your specific hardware setup.
 
 ### Modifying / Creating Levels
 Find the loadLevel() function in the code. It contains a switch statement with 10 predefined levels. You can modify existing levels or add new ones using the following functions:
