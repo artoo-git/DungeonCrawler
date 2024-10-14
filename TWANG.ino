@@ -1,3 +1,6 @@
+
+// Forked from CRITTERS/TWANG (https://github.com/CRITTERS/TWANG)
+
 // Required libs
 #include "FastLED.h"
 #include "I2Cdev.h"
