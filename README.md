@@ -15,11 +15,13 @@ An Arduino-based, 1D, LED-loving dungeon crawler. This project is forked from [C
 - Screensaver mode
 
 ## Hardware Requirements
-- Arduino board (compatible with FastLED and I2Cdev libraries)
+- Arduino board (compatible with FastLED and I2Cdev libraries) (e.g. Arduino Mega 2560)
 - LED strip (WS2812B or similar, compatible with FastLED)
-- MPU6050 accelerometer
-- Speaker for sound effects
+- MPU6050 accelerometer  (e.g. 1x Gy-521 3 Axis Accelerometer Module)
+- Speaker for sound effects (e.g. 1x 2W 8 Ohm Speaker)
 - 3 LEDs for life indicators
+
+Some 3d print models for the HW enclosure are available (e.g [here](https://www.thingiverse.com/thing:5390686)). I used an old router chassis and I built the joystick as an external controller. If you go that way, use a shielded cable and keep it short to prevent excessive noise acceleromenter.
 
 ## Software Dependencies
 - FastLED library
