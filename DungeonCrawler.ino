@@ -27,7 +27,7 @@ int16_t gx, gy, gz;
 #define NUM_LEDS             300
 #define DATA_PIN             3
 #define CLOCK_PIN            4     
-#define LED_COLOR_ORDER      BGR   //if colours aren't working, try GRB or GBR
+#define LED_COLOR_ORDER      BRG   //if colours aren't working, try GRB or GBR
 #define BRIGHTNESS           200   //Use a lower value for lower current power supplies(<2 amps) MAX = 255
 #define DIRECTION            1     // 0 = right to left, 1 = left to right
 #define MIN_REDRAW_INTERVAL  16    // Min redraw interval (ms) 33 = 30fps / 16 = 63fps
@@ -216,7 +216,7 @@ void loop() {
             FastLED.clear();
             if(stageStartTime+500 > mm){
                 int n = max(map(((mm-stageStartTime)), 0, 500, NUM_LEDS, 0), 0);
-                for(int i = NUM_LEDS; i>= n; i--){
+                for(int i = NUM_LEDS -1; i>= n; i--){
                     brightness = 255;
                     leds[i] = CRGB(0, brightness, 0);
                 }
@@ -238,12 +238,12 @@ void loop() {
             SFXcomplete();
             if(stageStartTime+500 > mm){
                 int n = max(map(((mm-stageStartTime)), 0, 500, NUM_LEDS, 0), 0);
-                for(int i = NUM_LEDS; i>= n; i--){
+                for(int i = NUM_LEDS -1; i>= n; i--){
                     brightness = (sin(((i*10)+mm)/500.0)+1)*255;
                     leds[i].setHSV(brightness, 255, 50);
                 }
             }else if(stageStartTime+5000 > mm){
-                for(int i = NUM_LEDS; i>= 0; i--){
+                for(int i = NUM_LEDS -1; i>= 0; i--){
                     brightness = (sin(((i*10)+mm)/500.0)+1)*255;
                     leds[i].setHSV(brightness, 255, 50);
                 }
@@ -650,7 +650,7 @@ void screenSaverTick() {
     long mm = millis();
     int mode = (mm / 20000) % 3;
 
-    for (i = 0; i < NUM_LEDS; i++) {
+    for (i = 0; i < NUM_LEDS -1; i++) {
         leds[i].nscale8(250);
     }
 
@@ -659,7 +659,7 @@ void screenSaverTick() {
         n = (mm / 250) % 10;
         b = 10 + ((sin(mm / 500.00) + 1) * 20.00);
         c = 20 + ((sin(mm / 5000.00) + 1) * 33);
-        for (i = 0; i < NUM_LEDS; i++) {
+        for (i = 0; i < NUM_LEDS -1; i++) {
             if (i % 10 == n) {
                 leds[i] = CHSV(c, 255, 150);
             }
@@ -667,7 +667,7 @@ void screenSaverTick() {
     } else if (mode == 1) {
         // Random flashes (unchanged)
         randomSeed(mm);
-        for (i = 0; i < NUM_LEDS; i++) {
+        for (i = 0; i < NUM_LEDS -1; i++) {
             if (random8(200) == 0) {
                 leds[i] = CHSV(25, 255, 100);
             }
