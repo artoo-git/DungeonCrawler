@@ -1,7 +1,7 @@
 # Dungeon Crawler 1D
 
 ## Description
-An Arduino-based, 1D, LED-loving dungeon crawler. This project is forked from [CRITTERS/TWANG](https://github.com/Critters/TWANG) and inspired by Line Wobbler by Robin B. It uses an LED strip to create an immersive dungeon crawler-style experience where players navigate through various levels, avoiding enemies and obstacles.
+An Arduino-based, 1D, LED-loving dungeon crawler videogame. This project is forked from [CRITTERS/TWANG](https://github.com/Critters/TWANG) and inspired by Line Wobbler by Robin B. It uses an LED strip to create an immersive dungeon crawler-style experience where players navigate through various levels, avoiding enemies and obstacles.
 
 ## Features
 - Multiple game levels with increasing difficulty
